@@ -34,6 +34,10 @@ func (c *MiddlewareController) Login() {
 		c.ServeJSON()
 		return
 	}
+	if HashPassWord.Password == "" {
+		helpers.ApiFailure(c.Ctx, "please enter valid Username Or Password ", 1001)
+		return
+	}
 	err = helpers.VerifyHashedData(HashPassWord.Password, user.Password)
 	if err != nil {
 		c.Data["json"] = err.Error()

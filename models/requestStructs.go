@@ -3,9 +3,17 @@ package models
 import (
 	"time"
 
+	"github.com/astaxie/beego/orm"
 	"github.com/dgrijalva/jwt-go"
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
+
+func init() {
+	orm.RegisterDriver("postgres", orm.DRPostgres)
+	orm.RegisterDataBase("default", "postgres", "user=postgres password=root dbname=mydb sslmode=disable")
+	orm.RegisterModel(new(Users), new(Car))
+	orm.RunSyncdb("default", false, true)
+}
 
 // >>>>>>>>>>>>Models For tables Start from Here <<<<<<<<<<<<<<<<<<<<<<
 type Users struct {
@@ -17,7 +25,7 @@ type Users struct {
 	Country     string    `json:"country"`
 	Role        string    `json:"role"`
 	Age         int       `json:"age" orm:"size(3)"`
-	Password    string    `json:"password" orm:"notnull"`
+	Password    string    `json:"password"`
 	CreatedAt   time.Time `orm:"null"`
 	UpdatedAt   time.Time `orm:"null"`
 	DeletedAt   time.Time `orm:"null"`
@@ -37,15 +45,25 @@ type Car struct {
 	CarImage    string `orm:"null"`
 	ModifiedBy  string
 	Model       string
-	Type        CarType `orm:"column(type);type(enum);default(suv)"`
-	CreatedDate time.Time
-	UpdateAt    time.Time
+	Type        CarType   `orm:"column(car_type);type(enum)"`
+	CreatedDate time.Time `orm:"null"`
+	UpdateAt    time.Time `orm:"null"`
+}
+
+type HomeSetting struct {
+	Id        uint `orm:"pk;auto"`
+	Section   string
+	Type      string
+	Key       string
+	Value     string
+	CreatedAt time.Time `orm:"null"`
+	UpdateAt  time.Time `orm:"null"`
 }
 
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<End Table Models>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 type UserLoginRequest struct {
-	Email    string `json:"email"`
+	Email    string `json:"username"`
 	Password string `json:"password"`
 }
 
@@ -90,7 +108,7 @@ type UserDetailsRequest struct {
 }
 
 type SendOtpData struct {
-	Email string `json:"email"`
+	Username string `json:"username"`
 }
 
 type ResetUserPasswordOtp struct {
@@ -102,13 +120,25 @@ type ResetUserPasswordOtp struct {
 /// Car request structs
 
 type GetNewCarRequest struct {
-	CarName    string  `json:"car_name"`
-	CarImage   string  `json:"car_imag"`
-	ModifiedBy string  `json:"modified_by"`
-	Model      string  `json:"model"`
-	Type       CarType `json:"type"`
+	CarName    string  `json:"car_name" form:"car_name"`
+	CarImage   string  `json:"car_imag" form:"file"`
+	ModifiedBy string  `json:"modified_by" form:"modified_by"`
+	Model      string  `json:"model" form:"model"`
+	Type       CarType `json:"type" form:"type"`
+}
+
+type UpdateCarRequest struct {
+	Id         uint    `json:"car_id" form:"car_id"`
+	CarName    string  `json:"car_name" form:"car_name"`
+	CarImage   string  `json:"car_imag" form:"file"`
+	ModifiedBy string  `json:"modified_by" form:"modified_by"`
+	Model      string  `json:"model" form:"model"`
+	Type       CarType `json:"type" form:"type"`
 }
 
 type GetcarRequest struct {
-	Id int `json:"car_id"`
+	Id uint `json:"car_id"`
+}
+type OutgoingCallerID struct {
+	PhoneNumber string `json:"phone_number"`
 }

@@ -29,7 +29,12 @@ func init() {
 			beego.NSRouter("/reset_pass", &controllers.UserController{}, "post:ResetPassword"),
 		),
 		beego.NSNamespace("/car",
-			beego.NSRouter("/", &controllers.CarController{}, "get:GetAllCars"),
+			// beego.NSBefore(middleware.JWTMiddleware),
+			beego.NSRouter("/", &controllers.CarController{}, "post:GetSingleCar"),
+			beego.NSRouter("/cars", &controllers.CarController{}, "get:GetAllCars"),
+			beego.NSRouter("/create", &controllers.CarController{}, "post:AddNewCar"),
+			beego.NSRouter("/update", &controllers.CarController{}, "put:UpdateCar"),
+			beego.NSRouter("/delete", &controllers.CarController{}, "delete:DeleteCar"),
 		),
 	)
 	beego.AddNamespace(ns)

@@ -108,7 +108,7 @@ func (c *UserController) SendOtp() {
 		c.ServeJSON()
 		return
 	}
-	output, err := models.GetUserByEmail(bodyData.Email)
+	output, err := models.GetUserByEmail(bodyData.Username)
 	if err != nil {
 		c.Data["json"] = err.Error()
 		c.ServeJSON()
@@ -153,3 +153,4 @@ func (c *UserController) VerifyOtpResetpassword() {
 	c.Data["json"] = uppass
 	c.ServeJSON()
 }
+

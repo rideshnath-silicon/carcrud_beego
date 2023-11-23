@@ -3,6 +3,8 @@ package controllers
 import (
 	"CarCrudDemo/helpers"
 	"CarCrudDemo/models"
+	"encoding/json"
+	"errors"
 
 	"github.com/astaxie/beego"
 )
@@ -30,4 +32,142 @@ func (c *CarController) GetSingleCar() {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 	}
 	helpers.ApiSuccess(c.Ctx, Data, 1000)
+}
+
+// filter using like query to find car with name and type
+// func (c *CarController)GetCarUsingName
+
+func (c *CarController) AddNewCar() {
+	var cars models.GetNewCarRequest
+	if err := c.ParseForm(&cars); err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	json.Unmarshal(c.Ctx.Input.RequestBody, &cars)
+	_, fileheader, err := c.GetFile("file")
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, "File Getting Error", 1001)
+		return
+	}
+	var carType string = string(cars.Type)
+	cars.Type, err = NewCarType(carType)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	filedName := "file"
+	uploadDir := "./uploads/images/"
+	filepaths, err := helpers.UploadFile(c.Controller, filedName, fileheader, uploadDir)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	cars.CarImage = filepaths
+	data, err := models.InsertNewCar(cars)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	helpers.ApiSuccess(c.Ctx, data, 1002)
+}
+
+func NewCarType(input string) (models.CarType, error) {
+	switch input {
+	case "sedan", "hatchback", "SUV":
+		return models.CarType(input), nil
+	default:
+		return "", errors.New("invalid car type")
+	}
+}
+
+func (c *CarController) UpdateCar() {
+	var cars models.UpdateCarRequest
+	if err := c.ParseForm(&cars); err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	_, err := models.GetSingleCar(cars.Id)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	if err := c.ParseForm(&cars); err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+
+	json.Unmarshal(c.Ctx.Input.RequestBody, &cars)
+	_, fileheader, err := c.GetFile("file")
+	if err != nil {
+		data, err := models.GetSingleCar(cars.Id)
+		if err != nil {
+			helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+			return
+		}
+		if cars.CarName == "" {
+			cars.CarName = data.CarName
+		}
+		if cars.ModifiedBy == "" {
+			cars.ModifiedBy = data.ModifiedBy
+		}
+		if cars.Model == "" {
+			cars.Model = data.Model
+		}
+		if cars.Type == "" {
+			cars.Type = data.Type
+		}
+		var carType string = string(cars.Type)
+		cars.Type, err = NewCarType(carType)
+		if err != nil {
+			helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+			return
+		}
+		cars.CarImage = data.CarImage
+		res, err := models.UpdateCar(cars)
+		if err != nil {
+			helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+			return
+		}
+		helpers.ApiSuccess(c.Ctx, res, 1003)
+	}
+	var carType string = string(cars.Type)
+	cars.Type, err = NewCarType(carType)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	filedName := "file"
+	uploadDir := "./uploads/images/"
+	filepaths, err := helpers.UploadFile(c.Controller, filedName, fileheader, uploadDir)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	cars.CarImage = filepaths
+	data, err := models.UpdateCar(cars)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	helpers.ApiSuccess(c.Ctx, data, 1003)
+}
+
+func (c *CarController) DeleteCar() {
+	var car models.GetcarRequest
+	err := helpers.RequestBody(c.Ctx, &car)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	_, err = models.GetSingleCar(car.Id)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	data, err := models.DeleteCar(car.Id)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	helpers.ApiSuccess(c.Ctx, data, 1004)
 }

@@ -2,32 +2,30 @@ package models
 
 import (
 	"CarCrudDemo/helpers"
+	"errors"
 	"time"
 
 	"github.com/astaxie/beego/orm"
 )
 
-func init() {
-	orm.RegisterDriver("postgres", orm.DRPostgres)
-	orm.RegisterDataBase("default", "postgres", "user=postgres password=root dbname=mydb sslmode=disable")
-	orm.RegisterModel(new(Users), new(Car))
-	orm.RunSyncdb("default", false, true)
-}
-
-func GetUserByEmail(email string) (Users, error) {
+func GetUserByEmail(username string) (Users, error) {
 	o := orm.NewOrm()
 	var user Users
-	_, err := o.QueryTable(new(Users)).Filter("email", email).All(&user)
+	// orm.Debug = true
+	num, err := o.QueryTable(new(Users)).SetCond(orm.NewCondition().Or("phone_number", username).Or("email", username)).All(&user)
 	if err != nil {
 		return user, err
 	}
+	if num == 0 {
+		return user, errors.New("error :- please enter valid username or password")
+	}
 	return user, nil
-} 
+}
 
-func LoginUser(email string, pass string) (Users, error) {
+func LoginUser(username string, pass string) (Users, error) {
 	o := orm.NewOrm()
 	var user Users
-	_, err := o.QueryTable(new(Users)).Filter("email", email).Filter("password", pass).All(&user)
+	_, err := o.QueryTable(new(Users)).SetCond(orm.NewCondition().Or("phone_number", username).Or("email", username)).Filter("password", pass).All(&user)
 	if err != nil {
 		return user, err
 	}
@@ -38,9 +36,12 @@ func GetUserDetails(id interface{}) (Users, error) {
 	o := orm.NewOrm()
 	// orm.Debug = true
 	var user Users
-	_, err := o.QueryTable(new(Users)).Filter("id", id).All(&user, "first_name", "last_name", "email", "password", "phone_number")
+	num, err := o.QueryTable(new(Users)).Filter("id", id).All(&user, "first_name", "last_name", "email", "password", "phone_number")
 	if err != nil {
 		return user, err
+	}
+	if num == 0 {
+		return user, errors.New("error :- please enter valid user id")
 	}
 	return user, nil
 }
@@ -49,9 +50,12 @@ func GetAllUser() ([]Users, error) {
 	o := orm.NewOrm()
 	// orm.Debug = true
 	var user []Users
-	_, err := o.QueryTable(new(Users)).All(&user)
+	num, err := o.QueryTable(new(Users)).All(&user)
 	if err != nil {
 		return nil, err
+	}
+	if num == 0 {
+		return user, errors.New("error :- Data Not Found")
 	}
 	return user, nil
 }
@@ -90,11 +94,13 @@ func UpdateUser(Data UpdateUserRequest) (interface{}, error) {
 		Role:      Data.Role,
 		UpdatedAt: time.Now(),
 	}
-
 	o := orm.NewOrm()
 	num, err := o.Update(&user, "id", "first_name", "last_name", "country", "email", "age", "role", "updated_at")
 	if err != nil {
-		return num, err
+		return nil, err
+	}
+	if num == 0 {
+		return user, errors.New("error :- please enter valid user id")
 	}
 	return user, nil
 }

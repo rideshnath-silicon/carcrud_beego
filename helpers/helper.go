@@ -2,6 +2,10 @@ package helpers
 
 import (
 	"encoding/json"
+	"mime/multipart"
+	"os"
+	"strconv"
+	"time"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/context"
@@ -36,6 +40,7 @@ func GetUserDataFromTokan(c *context.Context) map[string]interface{} {
 
 func RequestBody(ctx *context.Context, Struct interface{}) error {
 	bodyData := ctx.Input.RequestBody
+	// fmt.Println(bodyData)
 	err := json.Unmarshal(bodyData, Struct)
 	if err != nil {
 		return err
@@ -101,97 +106,22 @@ func TwilioVerifyOTP(phoneNumber string, code string) error {
 	} else if *resp.Status == "approved" {
 		return nil
 	}
+
 	return nil
 }
 
-/*  refrences
-
-package main
-
-import (
-   "fmt"
-   "github.com/twilio/twilio-go"
-   "github.com/twilio/twilio-go/rest/verify/v2/service/verification"
-)
-
-func main() {
-   // Twilio credentials
-   accountSid := "your_twilio_account_sid"
-   authToken := "your_twilio_auth_token"
-
-   // Twilio Verify Service SID
-   serviceSid := "your_verify_service_sid"
-
-   // Recipient's phone number (replace with the user's actual phone number)
-   to := "+1234567890"
-
-   // Twilio client initialization
-   client := twilio.NewRestClient(accountSid, authToken)
-
-   // Send verification request
-   params := &verification.CreateVerificationParams{
-      To:   &to,
-      Channel: "sms", // or "call" for voice call
-   }
-
-   _, err := verification.Create(client, serviceSid, params)
-   if err != nil {
-      fmt.Println("Error sending verification request:", err)
-      return
-   }
-
-   fmt.Println("Verification request sent successfully")
+func UploadFile(c beego.Controller, filedName string, fileheader *multipart.FileHeader, uploadPath string) (string, error) {
+	if _, err := os.Stat(uploadPath); os.IsNotExist(err) {
+		// Create the directory and any necessary parent directories
+		err := os.MkdirAll("./"+uploadPath, os.ModePerm)
+		if err != nil {
+			return "", err
+		}
+	}
+	filePath := uploadPath + strconv.FormatInt(time.Now().UnixNano(), 10) + fileheader.Filename
+	err := c.SaveToFile(filedName, filePath)
+	if err != nil {
+		return "", err
+	}
+	return filePath, nil
 }
-
-
-
-
-
-
-package main
-
-import (
-   "fmt"
-   "github.com/twilio/twilio-go"
-   "github.com/twilio/twilio-go/rest/verify/v2/service/verification"
-)
-
-func main() {
-   // Twilio credentials
-   accountSid := "your_twilio_account_sid"
-   authToken := "your_twilio_auth_token"
-
-   // Twilio Verify Service SID
-   serviceSid := "your_verify_service_sid"
-
-   // Recipient's phone number (replace with the user's actual phone number)
-   to := "+1234567890"
-
-   // User's input verification code
-   code := "123456" // Replace with the user's input
-
-   // Twilio client initialization
-   client := twilio.NewRestClient(accountSid, authToken)
-
-   // Check verification code
-   params := &verification.CheckVerificationParams{
-      To:   &to,
-      Code: &code,
-   }
-
-   verificationCheck, err := verification.Check(client, serviceSid, params)
-   if err != nil {
-      fmt.Println("Error checking verification code:", err)
-      return
-   }
-
-   if verificationCheck.Status == "approved" {
-      fmt.Println("Verification successful")
-   } else {
-      fmt.Println("Verification failed")
-   }
-}
-
-
-
-*/
