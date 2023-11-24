@@ -19,6 +19,8 @@ func Messagess(MessageCode int) string {
 		messages = "Error In update"
 	case 2002:
 		messages = "Error in create"
+	case 5000:
+		messages = "Accont is verified"
 	case 5001:
 		messages = "Unauthorized User"
 	case 5002:

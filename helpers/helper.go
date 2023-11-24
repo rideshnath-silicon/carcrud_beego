@@ -1,10 +1,15 @@
 package helpers
 
 import (
+	"crypto/rand"
 	"encoding/json"
+	"fmt"
+	"io"
 	"mime/multipart"
+	"net/smtp"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/astaxie/beego"
@@ -124,4 +129,61 @@ func UploadFile(c beego.Controller, filedName string, fileheader *multipart.File
 		return "", err
 	}
 	return filePath, nil
+}
+
+func GenereateKeyForHomeSection(str1, str2 string) string {
+	concatenated := fmt.Sprintf("%s_%s", str1, str2)
+	uppercased := strings.ToUpper(concatenated)
+	return uppercased
+}
+
+func SendMailOTp(userEmail string, name string) (string, error) {
+	from := beego.AppConfig.String("EMAIL")
+	password := beego.AppConfig.String("PASSWORD")
+	to := []string{
+		userEmail,
+	}
+	OTP := GenerateOtp()
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "587"
+	subject := "Verify your email"
+	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+	body := `<div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
+				<div style="margin:50px auto;width:70%;padding:20px 0">
+					<div style="border-bottom:1px solid #eee">
+						<a href="" style="font-size:1.4em;color: #00466a;text-decoration:none;font-weight:600">HEllo I am Ridesh</a>
+					</div>
+					<p style="font-size:1.1em">Hi, ` + name + `</p>
+					<p>Thank you for Register in this app . Use the following OTP to complete your Sign Up procedures. OTP is valid for 5 minutes</p>
+					<h2 style="background: #00466a;margin: 0 auto;width: max-content;padding: 0 10px;color: #fff;border-radius: 4px;">` + OTP + `</h2>
+					<p style="font-size:0.9em;">Regards,<br />Your Brand</p>
+					<hr style="border:none;border-top:1px solid #eee" />
+					<div style="float:right;padding:8px 0;color:#aaa;font-size:0.8em;line-height:1;font-weight:300">
+						<p>Your Brand Inc</p>
+						<p>1600 Amphitheatre Parkway</p>
+						<p>California</p>
+					</div>
+				</div>
+			</div>`
+	message := []byte("Subject: " + subject + "\r\n" + mime + "\r\n" + body)
+	auth := smtp.PlainAuth("", from, password, smtpHost)
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, message)
+	if err != nil {
+		return "", err
+	}
+
+	return OTP, nil
+}
+
+func GenerateOtp() string {
+	var table = [...]byte{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
+	b := make([]byte, 4)
+	n, err := io.ReadAtLeast(rand.Reader, b, 4)
+	if n != 4 {
+		panic(err)
+	}
+	for i := 0; i < len(b); i++ {
+		b[i] = table[int(b[i])%len(table)]
+	}
+	return string(b)
 }

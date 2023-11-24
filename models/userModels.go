@@ -3,8 +3,10 @@ package models
 import (
 	"CarCrudDemo/helpers"
 	"errors"
+	"fmt"
 	"time"
 
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 )
 
@@ -25,9 +27,12 @@ func GetUserByEmail(username string) (Users, error) {
 func LoginUser(username string, pass string) (Users, error) {
 	o := orm.NewOrm()
 	var user Users
-	_, err := o.QueryTable(new(Users)).SetCond(orm.NewCondition().Or("phone_number", username).Or("email", username)).Filter("password", pass).All(&user)
+	num, err := o.QueryTable(new(Users)).SetCond(orm.NewCondition().Or("phone_number", username).Or("email", username)).Filter("password", pass).All(&user)
 	if err != nil {
 		return user, err
+	}
+	if num == 0 {
+		return user, errors.New("error :- please enter valid user id")
 	}
 	return user, nil
 }
@@ -117,4 +122,55 @@ func ResetPassword(Password string, id float64) (interface{}, error) {
 		return num, err
 	}
 	return user, nil
+}
+
+func UpadteOtpForEmail(id uint, otp string) (string, error) {
+	o := orm.NewOrm()
+	var user = Users{Id: id, Otp: otp, Verified: "no"}
+	num, err := o.Update(&user, "otp", "verified")
+	if err != nil {
+		return "num", err
+	}
+	if num == 0 {
+		return "user", errors.New("error :- Error To send OTP")
+	}
+	return "Successfully sent otp on given email address", nil
+}
+
+func VerifyEmailOTP(username string, otp string) (Users, error) {
+	o := orm.NewOrm()
+	var user Users
+	num, err := o.QueryTable(new(Users)).SetCond(orm.NewCondition().Or("phone_number", username).Or("email", username)).Filter("otp", otp).All(&user)
+	if err != nil {
+		return user, err
+	}
+	if num == 0 {
+		return user, errors.New("error :- please enter valid user id")
+	}
+	return user, nil
+}
+
+func UpdateVerified(id uint) error {
+	o := orm.NewOrm()
+	var user = Users{Id: id, Verified: "yes"}
+	num, err := o.Update(&user, "verified")
+	if err != nil {
+		return err
+	}
+	if num == 0 {
+		return errors.New("error :- Error in verify your email")
+	}
+	return nil
+}
+
+func UpdateColumnOTP(id uint, otp string) {
+	<-time.After(5 * time.Minute)
+	o := orm.NewOrm()
+	var user = Users{Id: id, Otp: otp}
+	_, err := o.Update(&user, "otp")
+	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<OTP IS Expired>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.")
+
+	if err != nil {
+		beego.Error("Error updating column:", err)
+	}
 }

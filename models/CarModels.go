@@ -34,9 +34,29 @@ func GetSingleCar(id uint) (Car, error) {
 	return car, nil
 }
 
+func GetCarUsingSearch(search string) ([]Car, error) {
+	o := orm.NewOrm()
+	var car []Car
+	num, err := o.QueryTable(new(Car)).SetCond(orm.NewCondition().Or("car_name__icontains", search).Or("carmodel__icontains", search).Or("car_type__icontains", search)).All(&car)
+	if err != nil {
+		return nil, err
+	}
+	if num == 0 {
+		return nil, errors.New("error :- No car found")
+	}
+	return car, nil
+}
+
 func InsertNewCar(data GetNewCarRequest) (interface{}, error) {
 	o := orm.NewOrm()
-	var car = Car{CarName: data.CarName, CarImage: data.CarImage, ModifiedBy: data.ModifiedBy, Model: data.Model, Type: data.Type, CreatedDate: time.Now()}
+	var car = Car{
+		CarName: data.CarName, 
+		CarImage: data.CarImage, 
+		ModifiedBy: data.ModifiedBy, 
+		Model: data.Model, 
+		Type: data.Type, 
+		CreatedDate: time.Now(),
+	}
 	_, err := o.Insert(&car)
 	if err != nil {
 		return nil, err
@@ -73,3 +93,4 @@ func DeleteCar(id uint) (interface{}, error) {
 	}
 	return car, nil
 }
+

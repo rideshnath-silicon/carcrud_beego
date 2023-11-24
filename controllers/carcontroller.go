@@ -5,6 +5,7 @@ import (
 	"CarCrudDemo/models"
 	"encoding/json"
 	"errors"
+	"os"
 
 	"github.com/astaxie/beego"
 )
@@ -34,8 +35,25 @@ func (c *CarController) GetSingleCar() {
 	helpers.ApiSuccess(c.Ctx, Data, 1000)
 }
 
-// filter using like query to find car with name and type
-// func (c *CarController)GetCarUsingName
+func (c *CarController) GetCarUsingSearch() {
+	var bodyData models.GetCarLike
+	err := helpers.RequestBody(c.Ctx, &bodyData)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	cars, err := models.GetCarUsingSearch(bodyData.Search)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	var output []models.CarDetailsRequest
+	for i := 0; i < len(cars); i++ {
+		carDetails := models.CarDetailsRequest{CarName: cars[i].CarName, CarImage: cars[i].CarImage, ModifiedBy: cars[i].ModifiedBy, Model: cars[i].Model, Type: cars[i].Type}
+		output = append(output, carDetails)
+	}
+	helpers.ApiSuccess(c.Ctx, output, 1000)
+}
 
 func (c *CarController) AddNewCar() {
 	var cars models.GetNewCarRequest
@@ -56,7 +74,7 @@ func (c *CarController) AddNewCar() {
 		return
 	}
 	filedName := "file"
-	uploadDir := "./uploads/images/"
+	uploadDir := "./uploads/car/images/"
 	filepaths, err := helpers.UploadFile(c.Controller, filedName, fileheader, uploadDir)
 	if err != nil {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
@@ -86,24 +104,14 @@ func (c *CarController) UpdateCar() {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return
 	}
-	_, err := models.GetSingleCar(cars.Id)
+	data, err := models.GetSingleCar(cars.Id)
 	if err != nil {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return
 	}
-	if err := c.ParseForm(&cars); err != nil {
-		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
-		return
-	}
-
 	json.Unmarshal(c.Ctx.Input.RequestBody, &cars)
 	_, fileheader, err := c.GetFile("file")
 	if err != nil {
-		data, err := models.GetSingleCar(cars.Id)
-		if err != nil {
-			helpers.ApiFailure(c.Ctx, err.Error(), 1001)
-			return
-		}
 		if cars.CarName == "" {
 			cars.CarName = data.CarName
 		}
@@ -129,6 +137,12 @@ func (c *CarController) UpdateCar() {
 			return
 		}
 		helpers.ApiSuccess(c.Ctx, res, 1003)
+		return
+	}
+	err = os.Remove(data.CarImage)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
 	}
 	var carType string = string(cars.Type)
 	cars.Type, err = NewCarType(carType)
@@ -144,12 +158,12 @@ func (c *CarController) UpdateCar() {
 		return
 	}
 	cars.CarImage = filepaths
-	data, err := models.UpdateCar(cars)
+	output, err := models.UpdateCar(cars)
 	if err != nil {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return
 	}
-	helpers.ApiSuccess(c.Ctx, data, 1003)
+	helpers.ApiSuccess(c.Ctx, output, 1003)
 }
 
 func (c *CarController) DeleteCar() {
@@ -159,7 +173,12 @@ func (c *CarController) DeleteCar() {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return
 	}
-	_, err = models.GetSingleCar(car.Id)
+	res, err := models.GetSingleCar(car.Id)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	err = os.Remove(res.CarImage)
 	if err != nil {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return

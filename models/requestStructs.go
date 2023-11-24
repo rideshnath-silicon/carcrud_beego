@@ -11,7 +11,7 @@ import (
 func init() {
 	orm.RegisterDriver("postgres", orm.DRPostgres)
 	orm.RegisterDataBase("default", "postgres", "user=postgres password=root dbname=mydb sslmode=disable")
-	orm.RegisterModel(new(Users), new(Car))
+	orm.RegisterModel(new(Users), new(Car), new(HomeSetting))
 	orm.RunSyncdb("default", false, true)
 }
 
@@ -26,6 +26,8 @@ type Users struct {
 	Role        string    `json:"role"`
 	Age         int       `json:"age" orm:"size(3)"`
 	Password    string    `json:"password"`
+	Otp         string    `orm:"null"`
+	Verified    string    `orm:"null"`
 	CreatedAt   time.Time `orm:"null"`
 	UpdatedAt   time.Time `orm:"null"`
 	DeletedAt   time.Time `orm:"null"`
@@ -117,6 +119,11 @@ type ResetUserPasswordOtp struct {
 	NewPass string `json:"new_password"`
 }
 
+type VerifyEmailOTPRequest struct {
+	Username string `json:"username"`
+	Otp      string `json:"otp"`
+}
+
 /// Car request structs
 
 type GetNewCarRequest struct {
@@ -141,4 +148,33 @@ type GetcarRequest struct {
 }
 type OutgoingCallerID struct {
 	PhoneNumber string `json:"phone_number"`
+}
+
+type GetCarLike struct {
+	Search string `json:"search"`
+}
+
+type CarDetailsRequest struct {
+	CarName    string  `json:"car_name"`
+	CarImage   string  `json:"car_imag"`
+	ModifiedBy string  `json:"modified_by"`
+	Model      string  `json:"model"`
+	Type       CarType `json:"type"`
+}
+
+// Home Setting reuests
+
+type InserNewHomeSettingRequest struct {
+	Section string `json:"section" form:"section"`
+	Type    string `json:"type" form:"type"`
+	Key     string `json:"key" form:"key"`
+	Value   string `json:"value" form:"value"`
+}
+
+type UpdateHomeSetingRequest struct {
+	Id      uint   `json:"home_seting_id"`
+	Section string `json:"section"`
+	Type    string `json:"type"`
+	Key     string `json:"key"`
+	Value   string `json:"value"`
 }
