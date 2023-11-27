@@ -3,9 +3,7 @@ package middleware
 import (
 	"CarCrudDemo/helpers"
 	"CarCrudDemo/models"
-	"encoding/json"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/astaxie/beego"
@@ -13,7 +11,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-var jwtKey = []byte(os.Getenv("JWT_SEC_KEY"))
+var jwtKey = []byte(beego.AppConfig.String("JWT_SEC_KEY"))
 
 type MiddlewareController struct {
 	beego.Controller
@@ -21,17 +19,15 @@ type MiddlewareController struct {
 
 func (c *MiddlewareController) Login() {
 	var user models.UserLoginRequest
-	body := c.Ctx.Input.RequestBody
-	err := json.Unmarshal(body, &user)
+	err := helpers.RequestBody(c.Ctx, &user)
 	if err != nil {
-		c.Data["json"] = err.Error()
-		c.ServeJSON()
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return
 	}
 	HashPassWord, err := models.GetUserByEmail(user.Email)
 	if err != nil {
-		c.Data["json"] = err.Error()
-		c.ServeJSON()
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+
 		return
 	}
 	if HashPassWord.Password == "" {
@@ -40,14 +36,13 @@ func (c *MiddlewareController) Login() {
 	}
 	err = helpers.VerifyHashedData(HashPassWord.Password, user.Password)
 	if err != nil {
-		c.Data["json"] = err.Error()
-		c.ServeJSON()
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+
 		return
 	}
 	userData, _ := models.LoginUser(user.Email, HashPassWord.Password)
 	if userData.Email == "" && userData.FirstName == "" {
-		c.Data["json"] = "unauthorized User"
-		c.ServeJSON()
+		helpers.ApiFailure(c.Ctx, "Unauthorized User", 5001)
 		return
 	}
 	expirationTime := time.Now().Add(1 * time.Hour)
@@ -57,13 +52,11 @@ func (c *MiddlewareController) Login() {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
-		c.Data["json"] = err.Error()
-		c.ServeJSON()
+		helpers.ApiFailure(c.Ctx, err.Error(), 5001)
 		return
 	}
 	data := map[string]interface{}{"User_Data": token.Claims, "Tokan": tokenString}
-	c.Data["json"] = data
-	c.ServeJSON()
+	helpers.ApiSuccess(c.Ctx, data, 5000)
 }
 
 func JWTMiddleware(ctx *context.Context) {

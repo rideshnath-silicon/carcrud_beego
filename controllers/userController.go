@@ -45,6 +45,15 @@ func (c *UserController) RegisterNewUser() {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return
 	}
+	data, err := models.GetUserByEmail(bodyData.Email)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	if data.Email == bodyData.Email {
+		helpers.ApiFailure(c.Ctx, "Email already used by another account please try with new email", 10001)
+		return
+	}
 	output, err := models.InsertNewUser(bodyData)
 	if err != nil {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
@@ -59,6 +68,23 @@ func (c *UserController) UpdateUser() {
 	if err != nil {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return
+	}
+
+	data, err := models.GetUserDetails(bodyData.Id)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	if bodyData.Email != data.Email {
+		res, err := models.GetUserByEmail(bodyData.Email)
+		if err != nil {
+			helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+			return
+		}
+		if res.Email == bodyData.Email {
+			helpers.ApiFailure(c.Ctx, "Email already used by another account please try with new email", 10001)
+			return
+		}
 	}
 	output, err := models.UpdateUser(bodyData)
 	if err != nil {
@@ -116,8 +142,21 @@ func (c *UserController) SendOtp() {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return
 	}
-	Response := map[string]interface{}{"message": "Otp sent on registerd mobile number"}
+	otp, err := helpers.SendMailOTp(output.Email, output.FirstName)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	Response, err := models.UpadteOtpForEmail(output.Id, otp)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
 	helpers.ApiSuccess(c.Ctx, Response, 1000)
+	go func() {
+		newOtp := helpers.GenerateOtp()
+		models.UpdateColumnOTP(output.Id, newOtp)
+	}()
 }
 
 func (c *UserController) VerifyOtpResetpassword() {
@@ -134,8 +173,25 @@ func (c *UserController) VerifyOtpResetpassword() {
 	}
 	err = helpers.TwilioVerifyOTP(output.PhoneNumber, bodyData.Otp)
 	if err != nil {
-		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
-		return
+		data, err := models.VerifyEmailOTP(bodyData.Email, bodyData.Otp)
+		if err != nil {
+			helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+			return
+		}
+		if data.Otp != bodyData.Otp {
+			helpers.ApiFailure(c.Ctx, "Please Eenter Valid otp", 5001)
+		}
+		err = models.UpdateVerified(data.Id)
+		if err != nil {
+			helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+			return
+		}
+		uppass, err := models.ResetPassword(bodyData.NewPass, float64(output.Id))
+		if err != nil {
+			helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+			return
+		}
+		helpers.ApiSuccess(c.Ctx, uppass, 1003)
 	}
 	uppass, err := models.ResetPassword(bodyData.NewPass, float64(output.Id))
 	if err != nil {
@@ -195,4 +251,48 @@ func (c *UserController) VerifyEmailOTP() {
 		return
 	}
 	helpers.ApiSuccess(c.Ctx, "Your Account is Successfully Verified", 5000)
+}
+
+func (c *UserController) GetCountryWiseCountUser() {
+	res, err := models.GetCountryWiseCountUser()
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	helpers.ApiSuccess(c.Ctx, res, 1000)
+}
+
+func (c *UserController) GetVerifiedUsers() {
+	user, err := models.GetVerifiedUsers()
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+
+	var output []models.UserDetailsRequest
+	for i := 0; i < len(user); i++ {
+		userDetails := models.UserDetailsRequest{Id: user[i].Id, FirstName: user[i].FirstName, LastName: user[i].LastName, Email: user[i].Email, Country: user[i].Country, Age: user[i].Age}
+		output = append(output, userDetails)
+	}
+	helpers.ApiSuccess(c.Ctx, output, 1000)
+}
+
+func (c *UserController) SearchUser() {
+	var bodyData models.SearchRequest
+	err := helpers.RequestBody(c.Ctx, &bodyData)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	user, err := models.SearchUser(bodyData.Search)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	var output []models.UserDetailsRequest
+	for i := 0; i < len(user); i++ {
+		userDetails := models.UserDetailsRequest{Id: user[i].Id, LastName: user[i].LastName, Email: user[i].Email, FirstName: user[i].FirstName, Country: user[i].Country, Age: user[i].Age}
+		output = append(output, userDetails)
+	}
+	helpers.ApiSuccess(c.Ctx, output, 1000)
 }

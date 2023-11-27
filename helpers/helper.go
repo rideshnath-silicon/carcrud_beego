@@ -3,7 +3,6 @@ package helpers
 import (
 	"crypto/rand"
 	"encoding/json"
-	"fmt"
 	"io"
 	"mime/multipart"
 	"net/smtp"
@@ -132,9 +131,13 @@ func UploadFile(c beego.Controller, filedName string, fileheader *multipart.File
 }
 
 func GenereateKeyForHomeSection(str1, str2 string) string {
-	concatenated := fmt.Sprintf("%s_%s", str1, str2)
-	uppercased := strings.ToUpper(concatenated)
-	return uppercased
+	combinedString := str1 + " " + str2
+	underscoredString := strings.ReplaceAll(combinedString, " ", "_")
+
+	// Convert to uppercase
+	uppercaseCode := strings.ToUpper(underscoredString)
+
+	return uppercaseCode
 }
 
 func SendMailOTp(userEmail string, name string) (string, error) {
@@ -156,12 +159,12 @@ func SendMailOTp(userEmail string, name string) (string, error) {
 					<p style="font-size:1.1em">Hi, ` + name + `</p>
 					<p>Thank you for Register in this app . Use the following OTP to complete your Sign Up procedures. OTP is valid for 5 minutes</p>
 					<h2 style="background: #00466a;margin: 0 auto;width: max-content;padding: 0 10px;color: #fff;border-radius: 4px;">` + OTP + `</h2>
-					<p style="font-size:0.9em;">Regards,<br />Your Brand</p>
+					<p style="font-size:0.9em;">Regards,<br />Er. Ridesh Nath</p>
 					<hr style="border:none;border-top:1px solid #eee" />
 					<div style="float:right;padding:8px 0;color:#aaa;font-size:0.8em;line-height:1;font-weight:300">
-						<p>Your Brand Inc</p>
-						<p>1600 Amphitheatre Parkway</p>
-						<p>California</p>
+						<p>Ridesh Nath</p>
+						<p>Burhanpur M.P</p>
+						<p>India</p>
 					</div>
 				</div>
 			</div>`

@@ -5,15 +5,12 @@ go 1.21
 require github.com/astaxie/beego v1.12.3
 
 require (
-	github.com/beego/beego v1.12.12
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/lib/pq v1.10.9
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/twilio/twilio-go v1.15.2
 	golang.org/x/crypto v0.15.0
 )
-
-require gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -35,6 +32,5 @@ require (
 	golang.org/x/sys v0.14.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
-	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

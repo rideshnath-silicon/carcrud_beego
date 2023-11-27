@@ -36,7 +36,7 @@ func (c *CarController) GetSingleCar() {
 }
 
 func (c *CarController) GetCarUsingSearch() {
-	var bodyData models.GetCarLike
+	var bodyData models.SearchRequest
 	err := helpers.RequestBody(c.Ctx, &bodyData)
 	if err != nil {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
@@ -139,11 +139,6 @@ func (c *CarController) UpdateCar() {
 		helpers.ApiSuccess(c.Ctx, res, 1003)
 		return
 	}
-	err = os.Remove(data.CarImage)
-	if err != nil {
-		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
-		return
-	}
 	var carType string = string(cars.Type)
 	cars.Type, err = NewCarType(carType)
 	if err != nil {
@@ -163,9 +158,13 @@ func (c *CarController) UpdateCar() {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return
 	}
+	err = os.Remove(data.CarImage)
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
 	helpers.ApiSuccess(c.Ctx, output, 1003)
 }
-
 func (c *CarController) DeleteCar() {
 	var car models.GetcarRequest
 	err := helpers.RequestBody(c.Ctx, &car)
@@ -178,12 +177,12 @@ func (c *CarController) DeleteCar() {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return
 	}
-	err = os.Remove(res.CarImage)
+	data, err := models.DeleteCar(car.Id)
 	if err != nil {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return
 	}
-	data, err := models.DeleteCar(car.Id)
+	err = os.Remove(res.CarImage)
 	if err != nil {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return

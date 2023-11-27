@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	"github.com/dgrijalva/jwt-go"
 	_ "github.com/lib/pq" // PostgreSQL driver
@@ -10,7 +11,7 @@ import (
 
 func init() {
 	orm.RegisterDriver("postgres", orm.DRPostgres)
-	orm.RegisterDataBase("default", "postgres", "user=postgres password=root dbname=mydb sslmode=disable")
+	orm.RegisterDataBase("default", "postgres", beego.AppConfig.String("sqlconn"))
 	orm.RegisterModel(new(Users), new(Car), new(HomeSetting))
 	orm.RunSyncdb("default", false, true)
 }
@@ -70,22 +71,24 @@ type UserLoginRequest struct {
 }
 
 type NewUserRequest struct {
-	FirstName string `json:"first_name" orm:"null"`
-	LastName  string `json:"last_name" orm:"null"`
-	Email     string `json:"email" orm:"unique"`
-	Country   string `json:"country"`
-	Role      string `json:"role"`
-	Age       int    `json:"age" orm:"size(3)"`
-	Password  string `json:"password" orm:"notnull"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	Email       string `json:"email"`
+	PhoneNumber string `json:"phone_number"`
+	Country     string `json:"country"`
+	Role        string `json:"role"`
+	Age         int    `json:"age" orm:"size(3)"`
+	Password    string `json:"password" orm:"notnull"`
 }
 type UpdateUserRequest struct {
-	Id        uint   `json:"user_id"`
-	FirstName string `json:"first_name" orm:"null"`
-	LastName  string `json:"last_name" orm:"null"`
-	Email     string `json:"email" orm:"unique"`
-	Country   string `json:"country"`
-	Role      string `json:"role"`
-	Age       int    `json:"age" orm:"size(3)"`
+	Id          uint   `json:"user_id"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name" `
+	Email       string `json:"email"`
+	PhoneNumber string `json:"phone_number"`
+	Country     string `json:"country"`
+	Role        string `json:"role"`
+	Age         int    `json:"age" `
 }
 
 type ResetUserPassword struct {
@@ -124,6 +127,11 @@ type VerifyEmailOTPRequest struct {
 	Otp      string `json:"otp"`
 }
 
+type GetCountryWiseUserRequest struct {
+	Country string `json:"country"`
+	Count   int    `json:"count"`
+}
+
 /// Car request structs
 
 type GetNewCarRequest struct {
@@ -150,7 +158,7 @@ type OutgoingCallerID struct {
 	PhoneNumber string `json:"phone_number"`
 }
 
-type GetCarLike struct {
+type SearchRequest struct {
 	Search string `json:"search"`
 }
 
@@ -172,9 +180,22 @@ type InserNewHomeSettingRequest struct {
 }
 
 type UpdateHomeSetingRequest struct {
-	Id      uint   `json:"home_seting_id"`
-	Section string `json:"section"`
-	Type    string `json:"type"`
-	Key     string `json:"key"`
-	Value   string `json:"value"`
+	Id      uint   `json:"home_seting_id" form:"home_seting_id"`
+	Section string `json:"section" form:"section"`
+	Type    string `json:"type" form:"type"`
+	Key     string `json:"key" form:"key"`
+	Value   string `json:"value" form:"value"`
+}
+
+type GetHomeSettingRequest struct {
+	Id uint `json:"home_seting_id" form:"home_seting_id"`
+}
+
+type UserWiseHomeRequest struct {
+	Section   string `json:"section"`
+	Type      string `json:"type" `
+	Key       string `json:"key" `
+	Value     string `json:"value"`
+	FirstName string `json:"first_name" `
+	LastName  string `json:"last_name" `
 }

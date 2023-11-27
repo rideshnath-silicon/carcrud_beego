@@ -37,7 +37,7 @@ func GetSingleCar(id uint) (Car, error) {
 func GetCarUsingSearch(search string) ([]Car, error) {
 	o := orm.NewOrm()
 	var car []Car
-	num, err := o.QueryTable(new(Car)).SetCond(orm.NewCondition().Or("car_name__icontains", search).Or("carmodel__icontains", search).Or("car_type__icontains", search)).All(&car)
+	num, err := o.QueryTable(new(Car)).SetCond(orm.NewCondition().Or("car_name__icontains", search).Or("model__icontains", search).Or("modified_by__icontains", search).Or("car_type__icontains", search)).All(&car)
 	if err != nil {
 		return nil, err
 	}
@@ -50,11 +50,11 @@ func GetCarUsingSearch(search string) ([]Car, error) {
 func InsertNewCar(data GetNewCarRequest) (interface{}, error) {
 	o := orm.NewOrm()
 	var car = Car{
-		CarName: data.CarName, 
-		CarImage: data.CarImage, 
-		ModifiedBy: data.ModifiedBy, 
-		Model: data.Model, 
-		Type: data.Type, 
+		CarName:     data.CarName,
+		CarImage:    data.CarImage,
+		ModifiedBy:  data.ModifiedBy,
+		Model:       data.Model,
+		Type:        data.Type,
 		CreatedDate: time.Now(),
 	}
 	_, err := o.Insert(&car)
@@ -93,4 +93,3 @@ func DeleteCar(id uint) (interface{}, error) {
 	}
 	return car, nil
 }
-
