@@ -104,12 +104,12 @@ func (c *CarController) UpdateCar() {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return
 	}
+	json.Unmarshal(c.Ctx.Input.RequestBody, &cars)
 	data, err := models.GetSingleCar(cars.Id)
 	if err != nil {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return
 	}
-	json.Unmarshal(c.Ctx.Input.RequestBody, &cars)
 	_, fileheader, err := c.GetFile("file")
 	if err != nil {
 		if cars.CarName == "" {

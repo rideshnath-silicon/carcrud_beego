@@ -153,11 +153,11 @@ func SendMailOTp(userEmail string, name string) (string, error) {
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 	body := `<div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
 				<div style="margin:50px auto;width:70%;padding:20px 0">
-					<div style="border-bottom:1px solid #eee">
-						<a href="" style="font-size:1.4em;color: #00466a;text-decoration:none;font-weight:600">HEllo I am Ridesh</a>
+				<div style="border-bottom:1px solid #eee">
+						<a href="" style="font-size:1.4em;color: #00466a;text-decoration:none;font-weight:600">Hello, I am Ridesh</a>
 					</div>
 					<p style="font-size:1.1em">Hi, ` + name + `</p>
-					<p>Thank you for Register in this app . Use the following OTP to complete your Sign Up procedures. OTP is valid for 5 minutes</p>
+					<p>Thank you for Register in this app . Use the following OTP to verify your email. OTP is valid for 5 minutes</p>
 					<h2 style="background: #00466a;margin: 0 auto;width: max-content;padding: 0 10px;color: #fff;border-radius: 4px;">` + OTP + `</h2>
 					<p style="font-size:0.9em;">Regards,<br />Er. Ridesh Nath</p>
 					<hr style="border:none;border-top:1px solid #eee" />
@@ -174,7 +174,6 @@ func SendMailOTp(userEmail string, name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	return OTP, nil
 }
 

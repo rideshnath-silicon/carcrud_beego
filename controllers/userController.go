@@ -45,11 +45,8 @@ func (c *UserController) RegisterNewUser() {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return
 	}
-	data, err := models.GetUserByEmail(bodyData.Email)
-	if err != nil {
-		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
-		return
-	}
+	data, _ := models.GetUserByEmail(bodyData.Email)
+
 	if data.Email == bodyData.Email {
 		helpers.ApiFailure(c.Ctx, "Email already used by another account please try with new email", 10001)
 		return
@@ -76,11 +73,7 @@ func (c *UserController) UpdateUser() {
 		return
 	}
 	if bodyData.Email != data.Email {
-		res, err := models.GetUserByEmail(bodyData.Email)
-		if err != nil {
-			helpers.ApiFailure(c.Ctx, err.Error(), 1001)
-			return
-		}
+		res, _ := models.GetUserByEmail(bodyData.Email)
 		if res.Email == bodyData.Email {
 			helpers.ApiFailure(c.Ctx, "Email already used by another account please try with new email", 10001)
 			return

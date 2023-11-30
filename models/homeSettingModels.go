@@ -36,7 +36,7 @@ func UpdateHomeSeting(data UpdateHomeSetingRequest) (interface{}, error) {
 		Value:    data.Value,
 		UpdateAt: time.Now(),
 	}
-	num, err := o.Update(&hsetting, "section", "type", "key", "value", "update_at")
+	num, err := o.Update(&hsetting, "id", "section", "type", "key", "value", "update_at")
 	if err != nil {
 		return nil, err
 	}
