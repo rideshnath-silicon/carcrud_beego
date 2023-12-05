@@ -12,13 +12,19 @@ type UserController struct {
 	beego.Controller
 }
 
+// GetAll ...
+// @Title Get All
+// @Description get Users
+// @Param   Authorization   header  string  true  "Bearer YourAccessToken"
+// @Success 200 {object} models.Users
+// @Failure 403
+// @router /users [get]
 func (c *UserController) GetAllUser() {
 	user, err := models.GetAllUser()
 	if err != nil {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return
 	}
-
 	var output []models.UserDetailsRequest
 	for i := 0; i < len(user); i++ {
 		userDetails := models.UserDetailsRequest{Id: user[i].Id, FirstName: user[i].FirstName, LastName: user[i].LastName, Email: user[i].Email, Country: user[i].Country, Age: user[i].Age}
@@ -28,7 +34,6 @@ func (c *UserController) GetAllUser() {
 
 	// Get the current page's items
 	startIndex := p.Offset()
-
 	// Calculate the end index
 	endIndex := startIndex + 3
 	if endIndex > len(output) {
@@ -38,6 +43,13 @@ func (c *UserController) GetAllUser() {
 	helpers.ApiSuccess(c.Ctx, pageItems, 1000)
 }
 
+// PostRegisterNewUser ...
+// @Title Insert New User
+// @Desciption new users
+// @Param body body models.NewUserRequest true "Insert New User"
+// @Success 201 {object} models.Users
+// @Failure 403
+// @router /register [post]
 func (c *UserController) RegisterNewUser() {
 	var bodyData models.NewUserRequest
 	err := helpers.RequestBody(c.Ctx, &bodyData)
@@ -59,6 +71,14 @@ func (c *UserController) RegisterNewUser() {
 	helpers.ApiSuccess(c.Ctx, output, 1002)
 }
 
+// UpdateUser ...
+// @Title update User
+// @Desciption update users
+// @Param body body models.UpdateUserRequest true "update New User"
+// @Param   Authorization   header  string  true  "Bearer YourAccessToken"
+// @Success 201 {object} models.Users
+// @Failure 403
+// @router /update [put]
 func (c *UserController) UpdateUser() {
 	var bodyData models.UpdateUserRequest
 	err := helpers.RequestBody(c.Ctx, &bodyData)
@@ -87,6 +107,14 @@ func (c *UserController) UpdateUser() {
 	helpers.ApiSuccess(c.Ctx, output, 1003)
 }
 
+// ResetPassword ...
+// @Title Reset password
+// @Desciption Reset password
+// @Param body body models.ResetUserPassword true "reset password"
+// @Param   Authorization   header  string  true  "Bearer YourAccessToken"
+// @Success 201 {object} models.Users
+// @Failure 403
+// @router /reset_pass [post]
 func (c *UserController) ResetPassword() {
 	claims := helpers.GetUserDataFromTokan(c.Ctx)
 	id := claims["User_id"].(float64)
@@ -118,6 +146,14 @@ func (c *UserController) ResetPassword() {
 	helpers.ApiSuccess(c.Ctx, uppass, 1003)
 }
 
+// SendOtp ...
+// @Title forgot password
+// @Desciption forgot password
+// @Param body body models.SendOtpData true "forgot password this is send otp on mobile and email"
+// @Param   Authorization   header  string  true  "Bearer YourAccessToken"
+// @Success 201 {object} string
+// @Failure 403
+// @router /forgot_pass [post]
 func (c *UserController) SendOtp() {
 	var bodyData models.SendOtpData
 	err := helpers.RequestBody(c.Ctx, &bodyData)
@@ -152,6 +188,14 @@ func (c *UserController) SendOtp() {
 	}()
 }
 
+// VerifyOtpResetpassword ...
+// @Title verify otp
+// @Desciption otp verification for forgot password
+// @Param body body models.ResetUserPasswordOtp true "otp verification for forgot password"
+// @Param   Authorization   header  string  true  "Bearer YourAccessToken"
+// @Success 201 {object} string
+// @Failure 403
+// @router /reset_pass_otp [post]
 func (c *UserController) VerifyOtpResetpassword() {
 	var bodyData models.ResetUserPasswordOtp
 	err := helpers.RequestBody(c.Ctx, &bodyData)
@@ -194,6 +238,14 @@ func (c *UserController) VerifyOtpResetpassword() {
 	helpers.ApiSuccess(c.Ctx, uppass, 1003)
 }
 
+// VerifyUserEmail ...
+// @Title verify email
+// @Desciption Verify email
+// @Param body body models.SendOtpData true "verify email"
+// @Param   Authorization   header  string  true  "Bearer YourAccessToken"
+// @Success 201 {object} string
+// @Failure 403
+// @router /verify_email [post]
 func (c *UserController) VerifyUserEmail() {
 	var bodyData models.SendOtpData
 	err := helpers.RequestBody(c.Ctx, &bodyData)
@@ -223,6 +275,14 @@ func (c *UserController) VerifyUserEmail() {
 	}()
 }
 
+// VerifyEmailOTP ...
+// @Title verify otp for email
+// @Desciption otp verification for eamil
+// @Param body body models.VerifyEmailOTPRequest true "otp verification for email"
+// @Param   Authorization   header  string  true  "Bearer YourAccessToken"
+// @Success 201 {object} string
+// @Failure 403
+// @router /verify_email_otp [post]
 func (c *UserController) VerifyEmailOTP() {
 	var bodyData models.VerifyEmailOTPRequest
 	err := helpers.RequestBody(c.Ctx, &bodyData)
@@ -255,6 +315,13 @@ func (c *UserController) GetCountryWiseCountUser() {
 	helpers.ApiSuccess(c.Ctx, res, 1000)
 }
 
+// GetVerifiedUsers ...
+// @Title verifid users
+// @Desciption Get all verified user
+// @Param   Authorization   header  string  true  "Bearer YourAccessToken"
+// @Success 201 {object} string
+// @Failure 403
+// @router /verified_user [get]
 func (c *UserController) GetVerifiedUsers() {
 	user, err := models.GetVerifiedUsers()
 	if err != nil {
@@ -270,6 +337,15 @@ func (c *UserController) GetVerifiedUsers() {
 	helpers.ApiSuccess(c.Ctx, output, 1000)
 }
 
+
+// SearchUser ...
+// @Title Search User
+// @Desciption SearchUser
+// @Param body body models.SearchRequest true "otp verification for email"
+// @Param   Authorization   header  string  true  "Bearer YourAccessToken"
+// @Success 201 {object} string
+// @Failure 403
+// @router /search [post]
 func (c *UserController) SearchUser() {
 	var bodyData models.SearchRequest
 	err := helpers.RequestBody(c.Ctx, &bodyData)
