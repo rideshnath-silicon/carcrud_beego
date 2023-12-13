@@ -1,1 +1,0 @@
-/home/ridesh/Desktop/Beego/CarCrudDemo/views/caruser/create.tpl

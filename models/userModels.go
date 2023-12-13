@@ -19,7 +19,7 @@ func GetUserByEmail(username string) (Users, error) {
 		return user, err
 	}
 	if num == 0 {
-		return user, errors.New("error :- please enter valid username or password")
+		return user, errors.New("please enter valid username or password")
 	}
 	return user, nil
 }
@@ -32,7 +32,7 @@ func LoginUser(username string, pass string) (Users, error) {
 		return user, err
 	}
 	if num == 0 {
-		return user, errors.New("error :- please enter valid user id")
+		return user, errors.New("please enter valid user id")
 	}
 	return user, nil
 }
@@ -51,11 +51,11 @@ func GetUserDetails(id interface{}) (Users, error) {
 	return user, nil
 }
 
-func GetAllUser() ([]Users, error) {
+func GetAllUser() ([]orm.Params, error) {
 	o := orm.NewOrm()
 	// orm.Debug = true
-	var user []Users
-	num, err := o.QueryTable(new(Users)).All(&user)
+	var user []orm.Params
+	num, err := o.QueryTable(new(Users)).Values(&user)
 	if err != nil {
 		return nil, err
 	}

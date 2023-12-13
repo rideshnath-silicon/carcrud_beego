@@ -133,10 +133,8 @@ func UploadFile(c beego.Controller, filedName string, fileheader *multipart.File
 func GenereateKeyForHomeSection(str1, str2 string) string {
 	combinedString := str1 + " " + str2
 	underscoredString := strings.ReplaceAll(combinedString, " ", "_")
-
 	// Convert to uppercase
 	uppercaseCode := strings.ToUpper(underscoredString)
-
 	return uppercaseCode
 }
 

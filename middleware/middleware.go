@@ -4,6 +4,7 @@ import (
 	"CarCrudDemo/helpers"
 	"CarCrudDemo/models"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/astaxie/beego"
@@ -18,6 +19,7 @@ type MiddlewareController struct {
 }
 
 func (c *MiddlewareController) Login() {
+
 	var user models.UserLoginRequest
 	err := helpers.RequestBody(c.Ctx, &user)
 	if err != nil {
@@ -60,21 +62,32 @@ func (c *MiddlewareController) Login() {
 }
 
 func JWTMiddleware(ctx *context.Context) {
+
 	tokenString := ctx.Input.Header("Authorization")
 	if tokenString == "" {
 		ctx.Output.SetStatus(http.StatusUnauthorized)
 		ctx.Output.JSON(map[string]string{"error": "Unauthorized"}, true, false)
 		return
 	}
-	tokenString = tokenString[7:]
+	bearer := ContainsBearer(tokenString)
+	if bearer {
+		tokenString = tokenString[7:]
+	}
+	// ctx.WriteString(fmt.Sprintf("\nValue>>>>>>>>>>>>>>>>>>>>>: %v,", tokenString))
+
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
 	})
-
 	if err != nil || !token.Valid {
 		ctx.Output.SetStatus(http.StatusUnauthorized)
 		ctx.Output.JSON(map[string]string{"error": "Invalid token"}, true, false)
 		return
 	}
 	ctx.Input.SetData("user", token.Claims.(jwt.MapClaims))
+}
+func ContainsBearer(token string) bool {
+	// Convert the token to lowercase to make the comparison case-insensitive
+	lowerToken := strings.ToLower(token)
+	// Check if the token starts with "bearer "
+	return strings.HasPrefix(lowerToken, "bearer ")
 }

@@ -3,13 +3,79 @@ package controllers
 import (
 	"CarCrudDemo/helpers"
 	"CarCrudDemo/models"
+	"encoding/json"
+	"fmt"
 
 	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/utils/pagination"
+	"github.com/beego/beego/httplib"
+	// "github.com/astaxie/beego/utils/pagination"
 )
 
 type UserController struct {
 	beego.Controller
+}
+
+func (c *UserController) Loginpage() {
+	message := c.GetSession("Error")
+	c.DelSession("Error")
+	c.Data["message"] = message
+	c.TplName = "login.tpl"
+	if err := c.Render(); err != nil {
+		// Handle the error, e.g., log it or show an error page
+		fmt.Println("Template rendering error:", err)
+	}
+}
+
+func (c *UserController) Loginsave() {
+	username := c.GetString("userName")
+	password := c.GetString("password")
+	// c.Ctx.WriteString(fmt.Sprintf("\nValue: %v,sesssion value: %v\n", username, password))
+	// return
+	req := httplib.Post("http://localhost:8080/v1/user/login")
+	// req.Header("Content-Type", "application/json")
+	req.Body(`{"username":"` + username + `","password":"` + password + `"}`)
+
+	str, err := req.String()
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	var resultMap map[string]interface{}
+	err = json.Unmarshal([]byte(str), &resultMap)
+	if err != nil {
+		c.SetSession("Error", err.Error())
+		return
+	}
+	if resultMap["Success"] == 0.0 {
+		c.SetSession("Error", resultMap["Data"])
+		c.Redirect("/v1/my", 302)
+		return
+	}
+	Data := resultMap["Data"]
+	dataMap, ok := Data.(map[string]interface{})
+	if !ok {
+		fmt.Println("Data is not a map[string]interface{}", resultMap["Success"])
+		return
+	}
+	req = httplib.Get("http://localhost:8080/v1/user/secure/users")
+	req.Header("Authorization", dataMap["Tokan"].(string))
+	strs, err := req.String()
+	if err != nil {
+		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
+		return
+	}
+	c.DelSession("Success")
+	// if resultMap["Success"] == 0.0 {
+	// 	c.SetSession("Error", resultMap["Data"])
+	// 	c.Redirect("/v1/my", 302)
+	// 	return
+	// }
+	// if resultMap["Success"] == 1.0 {
+	// 	c.SetSession("Success", resultMap["Message"])
+	// 	return
+	// }
+	c.Ctx.WriteString(strs)
+	// c.Ctx.WriteString(fmt.Sprintf("\nValue: %v,", str))
 }
 
 // GetAll ...
@@ -18,29 +84,36 @@ type UserController struct {
 // @Param   Authorization   header  string  true  "Bearer YourAccessToken"
 // @Success 200 {object} models.Users
 // @Failure 403
-// @router /users [get]
+// @router /secure/users [get]
 func (c *UserController) GetAllUser() {
 	user, err := models.GetAllUser()
 	if err != nil {
 		helpers.ApiFailure(c.Ctx, err.Error(), 1001)
 		return
 	}
-	var output []models.UserDetailsRequest
-	for i := 0; i < len(user); i++ {
-		userDetails := models.UserDetailsRequest{Id: user[i].Id, FirstName: user[i].FirstName, LastName: user[i].LastName, Email: user[i].Email, Country: user[i].Country, Age: user[i].Age}
-		output = append(output, userDetails)
-	}
-	p := pagination.NewPaginator(c.Ctx.Request, 3, len(output))
+	// var output []models.UserDetailsRequest
+	// for i := 0; i < len(user); i++ {
+	// 	userDetails := models.UserDetailsRequest{Id: user[i].Id, FirstName: user[i].FirstName, LastName: user[i].LastName, Email: user[i].Email, Country: user[i].Country, Age: user[i].Age}
+	// 	output = append(output, userDetails)
+	// }
+	// p := pagination.NewPaginator(c.Ctx.Request, 3, len(output))
 
 	// Get the current page's items
-	startIndex := p.Offset()
-	// Calculate the end index
-	endIndex := startIndex + 3
-	if endIndex > len(output) {
-		endIndex = len(output)
+	// startIndex := p.Offset()
+	// // Calculate the end index
+	// endIndex := startIndex + 3
+	// if endIndex > len(output) {
+	// 	endIndex = len(output)
+	// }
+	// c.Ctx.WriteString(fmt.Sprintf("\nValue: %v,", user))
+	c.Data["users"] = user
+	c.TplName = "index.tpl"
+	if err := c.Render(); err != nil {
+		// Handle the error, e.g., log it or show an error page
+		fmt.Println("Template rendering error:", err)
 	}
-	pageItems := output[startIndex:endIndex]
-	helpers.ApiSuccess(c.Ctx, pageItems, 1000)
+	// pageItems := output[startIndex:endIndex]
+	// helpers.ApiSuccess(c.Ctx, user, 1000)
 }
 
 // PostRegisterNewUser ...
@@ -49,7 +122,7 @@ func (c *UserController) GetAllUser() {
 // @Param body body models.NewUserRequest true "Insert New User"
 // @Success 201 {object} models.Users
 // @Failure 403
-// @router /register [post]
+// @router /secure/register [post]
 func (c *UserController) RegisterNewUser() {
 	var bodyData models.NewUserRequest
 	err := helpers.RequestBody(c.Ctx, &bodyData)
@@ -78,7 +151,7 @@ func (c *UserController) RegisterNewUser() {
 // @Param   Authorization   header  string  true  "Bearer YourAccessToken"
 // @Success 201 {object} models.Users
 // @Failure 403
-// @router /update [put]
+// @router /secure/update [put]
 func (c *UserController) UpdateUser() {
 	var bodyData models.UpdateUserRequest
 	err := helpers.RequestBody(c.Ctx, &bodyData)
@@ -114,7 +187,7 @@ func (c *UserController) UpdateUser() {
 // @Param   Authorization   header  string  true  "Bearer YourAccessToken"
 // @Success 201 {object} models.Users
 // @Failure 403
-// @router /reset_pass [post]
+// @router /secure/reset_pass [post]
 func (c *UserController) ResetPassword() {
 	claims := helpers.GetUserDataFromTokan(c.Ctx)
 	id := claims["User_id"].(float64)
@@ -153,7 +226,7 @@ func (c *UserController) ResetPassword() {
 // @Param   Authorization   header  string  true  "Bearer YourAccessToken"
 // @Success 201 {object} string
 // @Failure 403
-// @router /forgot_pass [post]
+// @router /secure/forgot_pass [post]
 func (c *UserController) SendOtp() {
 	var bodyData models.SendOtpData
 	err := helpers.RequestBody(c.Ctx, &bodyData)
@@ -195,7 +268,7 @@ func (c *UserController) SendOtp() {
 // @Param   Authorization   header  string  true  "Bearer YourAccessToken"
 // @Success 201 {object} string
 // @Failure 403
-// @router /reset_pass_otp [post]
+// @router /secure/reset_pass_otp [post]
 func (c *UserController) VerifyOtpResetpassword() {
 	var bodyData models.ResetUserPasswordOtp
 	err := helpers.RequestBody(c.Ctx, &bodyData)
@@ -245,7 +318,7 @@ func (c *UserController) VerifyOtpResetpassword() {
 // @Param   Authorization   header  string  true  "Bearer YourAccessToken"
 // @Success 201 {object} string
 // @Failure 403
-// @router /verify_email [post]
+// @router /secure/verify_email [post]
 func (c *UserController) VerifyUserEmail() {
 	var bodyData models.SendOtpData
 	err := helpers.RequestBody(c.Ctx, &bodyData)
@@ -282,7 +355,7 @@ func (c *UserController) VerifyUserEmail() {
 // @Param   Authorization   header  string  true  "Bearer YourAccessToken"
 // @Success 201 {object} string
 // @Failure 403
-// @router /verify_email_otp [post]
+// @router /secure/verify_email_otp [post]
 func (c *UserController) VerifyEmailOTP() {
 	var bodyData models.VerifyEmailOTPRequest
 	err := helpers.RequestBody(c.Ctx, &bodyData)
@@ -321,7 +394,7 @@ func (c *UserController) GetCountryWiseCountUser() {
 // @Param   Authorization   header  string  true  "Bearer YourAccessToken"
 // @Success 201 {object} string
 // @Failure 403
-// @router /verified_user [get]
+// @router /secure/verified_user [get]
 func (c *UserController) GetVerifiedUsers() {
 	user, err := models.GetVerifiedUsers()
 	if err != nil {
@@ -337,7 +410,6 @@ func (c *UserController) GetVerifiedUsers() {
 	helpers.ApiSuccess(c.Ctx, output, 1000)
 }
 
-
 // SearchUser ...
 // @Title Search User
 // @Desciption SearchUser
@@ -345,7 +417,7 @@ func (c *UserController) GetVerifiedUsers() {
 // @Param   Authorization   header  string  true  "Bearer YourAccessToken"
 // @Success 201 {object} string
 // @Failure 403
-// @router /search [post]
+// @router /secure/search [post]
 func (c *UserController) SearchUser() {
 	var bodyData models.SearchRequest
 	err := helpers.RequestBody(c.Ctx, &bodyData)

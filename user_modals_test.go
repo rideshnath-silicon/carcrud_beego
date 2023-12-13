@@ -47,7 +47,7 @@ func TestUserModels(t *testing.T) {
 			FirstName:   "Devendra",
 			LastName:    "pohekar",
 			Email:       "devendrapohekar.siliconithub@gmail.com",
-			PhoneNumber: "9109396802",
+			PhoneNumber: "1234567890",
 			Role:        "developer",
 			Country:     "India",
 			Age:         23,
